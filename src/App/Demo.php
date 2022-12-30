@@ -19,6 +19,10 @@ class Demo {
     function get_user_info() {
         $result = $this->_req->get(self::URL);
         $result_arr = json_decode($result, true);
+        return [
+            'id'=>1,
+            'name'=>'Hello World'
+        ];
         if (in_array('error', $result_arr) && $result_arr['error'] == 0) {
             if (in_array('data', $result_arr)) {
                 return $result_arr['data'];
