@@ -4,12 +4,15 @@ namespace Test\Service;
 
 use PHPUnit\Framework\TestCase;
 use App\Service\ProductHandler;
+use function AlibabaCloud\Client\envNotEmpty;
 
 /**
  * Class ProductHandlerTest
  */
 class ProductHandlerTest extends TestCase
 {
+    const SEARCH_DESSERT_PRODUCT = 'Dessert';
+    const SEARCH_PRODUCT_SORT_DESC = SORT_DESC;
     private $products = [
         [
             'id' => 1,
@@ -55,14 +58,82 @@ class ProductHandlerTest extends TestCase
         ],
     ];
 
+    /*
+     *@DESC 获取商品总金额
+     * @author  li
+     * @date 20221230
+     * @param array  商品信息
+     * @return float 总金额
+     */
     public function testGetTotalPrice()
     {
         $totalPrice = 0;
         foreach ($this->products as $product) {
             $price = $product['price'] ?: 0;
-            $totalPrice += $price;
+            if($price){
+                $totalPrice = bcadd($totalPrice, $price,0);
+            }
+
         }
 
-        $this->assertEquals(143, $totalPrice);
+        return $totalPrice;
+
+//        $this->assertEquals(143, $totalPrice);
+    }
+
+    /*
+     *@DESC 获取类型为dessert的商品并且按金额倒叙
+     * @author  li
+     * @date 20221230
+     * @param array  商品信息
+     * @return array dessert的商品
+     */
+    public function testDessertProduct()
+    {
+        $returnData = $sortData  = [];
+        foreach ($this->products as &$product) {
+            if($product['type'] == self::SEARCH_DESSERT_PRODUCT){
+                //把类型为dessert的商品放到一起
+                $sortData[] = $product;
+            }
+        }
+         //按金额排序
+        $sort  = array_column($sortData, 'price');
+        $returnData = $this->getSort($sort, self::SEARCH_PRODUCT_SORT_DESC, $sortData);
+        return $returnData;
+    }
+
+    /*
+     *@DESC 获取商品信息，创建时间改为时间戳
+     * @author  li
+     * @date 20221230
+     * @param array  排序字段
+     * @param string  排序规则
+     * @param array 排序后的数组
+     * @return  array
+     */
+    public function testUnixProduct(){
+        foreach ($this->products as &$product) {
+            if(!empty($product['create_at'])){
+                $product['create_at'] = strtotime($product['create_at']);
+            }
+        }
+        return $this->products;
+    }
+
+    /*
+     *@DESC 二维数组根据某个字段排序
+     * @author  li
+     * @date 20221230
+     * @param array  排序字段
+     * @param string  排序规则
+     * @param array 排序后的数组
+     * @return  array
+     */
+    public static function getSort($sort, $sortRule, $sortData){
+        if(!empty($sort) && !empty($sortRule) && !empty($sortData)){
+            array_multisort($sort, $sortRule, $sortData);
+        }
+        return $sortData;
     }
 }
